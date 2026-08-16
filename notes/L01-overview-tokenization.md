@@ -26,3 +26,7 @@
 这个比值本质上就是 BPE 训练时在优化的目标：给定 vocab size 这个"预算"，最大化压缩率（bytes/token）——和 efficiency lens 是同一套逻辑，只是预算从 FLOPs 换成了词表大小。
 
 要查确切比值，最直接的办法是实际编码一段文本，比较 `len(text.encode('utf-8'))` 和 `len(tokenizer.encode(text))`。
+
+**中文语料下，为什么"国产"LLM 通常更省 token**：根本原因不是模型出身，而是 **tokenizer 训练时用了多少中文语料**。国产大模型（Qwen、GLM、DeepSeek、Baichuan 等）通常会刻意用大量中文语料训练 tokenizer，词表里给中文字/词分配了足够的完整 merge，中文压缩率因此更高。参考数字：GPT-4 系 tokenizer（英文语料为主）中文约 1.5～2 token/字；Qwen、GLM 等中文优化过的 tokenizer 常能接近甚至优于 1 token/字。反过来，如果某个"国产"模型的 tokenizer 直接照搬 GPT 系而没有针对中文重新训练，同样不会省 token——决定因素是 tokenizer 的训练语料构成，不是模型的出身。更准确的表述应该是"中文语料优先训练的 tokenizer 更省中文 token"。
+
+*对 Agent 方向的意义*：中文内容为主的 Agent 场景（中文文档检索、工具调用日志等）选型时，值得实测 bytes/token 压缩率，而不是只看品牌来判断 context 预算和调用成本。
